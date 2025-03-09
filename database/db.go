@@ -53,9 +53,9 @@ func InitDB(conf *config.Config) error {
 	}
 
 	// 设置连接池参数
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetMaxIdleConns(conf.Database.MaxIdleConns) // 空闲连接数
+	sqlDB.SetMaxOpenConns(conf.Database.MaxOpenConns) // 最大连接数
+	sqlDB.SetConnMaxLifetime(time.Hour)               // 连接最大生命周期
 
 	DB = db
 	return nil

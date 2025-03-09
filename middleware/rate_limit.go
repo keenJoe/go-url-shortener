@@ -1,33 +1,54 @@
 package middleware
 
-// import (
-// 	"sync"
+import (
+	"net/http"
+	"sync"
 
-// 	"golang.org/x/time/rate"
-// )
+	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
+)
 
-// // 限流器映射
-// var (
-// 	limiterMap = make(map[string]*rate.Limiter)
-// 	mu         sync.Mutex
-// )
+// RateLimiter 速率限制器
+type RateLimiter struct {
+	ips   map[string]*rate.Limiter
+	mu    sync.RWMutex
+	rate  rate.Limit
+	burst int
+}
 
-// // 获取限流器
-// func getLimiter(ip string) *rate.Limiter {
-// 	mu.Lock()
-// 	defer mu.Unlock()
+// NewRateLimiter 创建新的速率限制器
+func NewRateLimiter(r rate.Limit, b int) *RateLimiter {
+	return &RateLimiter{
+		ips:   make(map[string]*rate.Limiter),
+		rate:  r,
+		burst: b,
+	}
+}
 
-// 	limiter, exists := limiterMap[ip]
-// 	if !exists {
-// 		// 每秒允许10个请求，最多允许30个突发请求
-// 		limiter = rate.NewLimiter(10, 30)
-// 		limiterMap[ip] = limiter
-// 	}
+// GetLimiter 获取IP对应的限制器
+func (rl *RateLimiter) GetLimiter(ip string) *rate.Limiter {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
 
-// 	return limiter
-// }
+	limiter, exists := rl.ips[ip]
+	if !exists {
+		limiter = rate.NewLimiter(rl.rate, rl.burst)
+		rl.ips[ip] = limiter
+	}
+
+	return limiter
+}
 
 // RateLimit 限流中间件
-// func RateLimit() gin.HandlerFunc {
-// 	return func(
-// }
+func RateLimit(rps int, burst int) gin.HandlerFunc {
+	limiter := NewRateLimiter(rate.Limit(rps), burst)
+
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		if !limiter.GetLimiter(ip).Allow() {
+			c.AbortWithStatus(http.StatusTooManyRequests)
+			return
+		}
+		c.Next()
+	}
+}

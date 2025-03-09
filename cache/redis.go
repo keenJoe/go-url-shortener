@@ -12,16 +12,17 @@ var RedisClient *redis.Client
 var ctx = context.Background()
 
 // InitRedis 初始化Redis连接
-func InitRedis(config *config.Config) error {
+func InitRedis(conf *config.Config) error {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     config.Redis.Addr,
-		Password: config.Redis.Password,
-		DB:       config.Redis.DB,
-		PoolSize: 100,
+		Addr:         conf.Redis.Addr,
+		Password:     conf.Redis.Password,
+		DB:           conf.Redis.DB,
+		PoolSize:     conf.Redis.PoolSize, // Redis连接池大小
+		MinIdleConns: 10,                  // 最小空闲连接数
+		MaxConnAge:   time.Hour,           // 连接最大年龄
 	})
 
-	_, err := RedisClient.Ping(ctx).Result()
-	return err
+	return nil
 }
 
 // SetURL 缓存URL映射
