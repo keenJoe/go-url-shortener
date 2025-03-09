@@ -1,0 +1,19 @@
+# 开发环境配置
+server:
+  port: 8081
+  mode: debug
+
+database:
+  host: localhost
+  port: 3306
+  username: root
+  password: inspiron741852
+  name: url_shortener
+  max_idle_conns: 10
+  max_open_conns: 50
+
+redis:
+  addr: localhost:6379
+  password: ""
+  db: 0
+  pool_size: 50 
